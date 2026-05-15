@@ -16,7 +16,7 @@ class m260515_092712_createLogTable extends Migration
             'id' => $this->primaryKey(),
             'ip' => $this->string(),
             'date' => $this->bigInteger(),
-            'url' => $this->string(),
+            'url' => $this->string(2048),
             'os' => $this->string(),
             'architecture' => $this->string(),
             'browser' => $this->string(),
