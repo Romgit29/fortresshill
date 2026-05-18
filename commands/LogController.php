@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\commands;
 
+use app\enums\log\Architecture;
 use app\models\Log;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -49,6 +50,8 @@ class LogController extends Controller
                     'browser' => $uaInfo->browser(),
                     'os' => $uaInfo->platform(),
                     'architecture' => $this->getUserAgentArch($line),
+                    'createdAt' => time(),
+                    'updatedAt' => time(),
                 ];
 
                 if (count($rows) >= $batchSize) {
@@ -96,23 +99,23 @@ class LogController extends Controller
 
         $userAgent = strtolower($matches[1]);
 
-        $x64Markers = ['x86_64', 'x64', 'win64', 'wow64', 'amd64', 'arm64', 'aarch64'];
+        $x64Markers = \Yii::$app->params['log_architecture_designation']['x64'];
         foreach ($x64Markers as $marker) {
             if (str_contains($userAgent, $marker)) {
-                return 'x64';
+                return Architecture::X64->value;
             }
         }
 
-        $x32Markers = ['i386', 'i686', 'x86', 'win32'];
+        $x32Markers = \Yii::$app->params['log_architecture_designation']['x32'];
         foreach ($x32Markers as $marker) {
             if (str_contains($userAgent, $marker)) {
-                return 'x32';
+                return Architecture::X32->value;
             }
         }
 
         if (str_contains($userAgent, 'android') || str_contains($userAgent, 'iphone')) {
             if (preg_match('/android [2-4]\./', $userAgent)) {
-                return 'x32';
+                return Architecture::X32->value;
             }
         }
 
