@@ -7,6 +7,8 @@ namespace app\controllers;
 use Yii;
 use app\models\ContactForm;
 use app\models\LoginForm;
+use app\models\LogSearch;
+use app\repositories\LogRepository;
 use yii\captcha\CaptchaAction;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -78,7 +80,19 @@ class SiteController extends Controller
      */
     public function actionIndex(): string
     {
-        return $this->render('index');
+        $params = Yii::$app->request->get('LogSearch', []);
+        $logRepository = new LogRepository();
+        $countGraphData = $logRepository->getRequestCountGraphData($params);
+        $mostPopularBrowserGraphData = $logRepository->getMostPopularBrowserGraphData($params);
+        $searchModel = new LogSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        return $this->render('index', [
+            'countGraphData' => $countGraphData,
+            'mostPopularBrowserGraphData' => $mostPopularBrowserGraphData,
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
     }
 
     /**

@@ -33,8 +33,8 @@ class LogController extends Controller
         $rows = [];
         $batchSize = 1000;
 
-        ini_set('memory_limit', '-1'); 
-        
+        ini_set('memory_limit', '-1');
+
         while (($line = fgets($handle)) !== false) {
             $line = trim($line);
 
@@ -48,7 +48,7 @@ class LogController extends Controller
                     'url' => $matches[3],
                     'browser' => $uaInfo->browser(),
                     'os' => $uaInfo->platform(),
-                    'architecture' => $this->getUserAgentArch($userAgent),
+                    'architecture' => $this->getUserAgentArch($line),
                 ];
 
                 if (count($rows) >= $batchSize) {
@@ -88,26 +88,34 @@ class LogController extends Controller
         }
     }
 
-    private function getUserAgentArch(string $userAgentString)
+    private function getUserAgentArch(string $logLine)
     {
-        if (!preg_match('/"([^"]+)"\s*$/', trim($userAgentString), $matches)) {
-            return null;
+        if (!preg_match('/"([^"]+)"\s*$/', trim($logLine), $matches)) {
+            return 'Unknown';
         }
 
-        $userAgentTokens = preg_split('/[\s()\/;,_]+/', strtolower($matches[1]));
+        $userAgent = strtolower($matches[1]);
 
-        $x64Markers = ['x86_64', 'amd64', 'win64', 'x64', 'wow64'];
-        $x32Markers = ['i386', 'i686', 'x86', 'win32'];
-
-        foreach ($userAgentTokens as $token) {
-            if (in_array($token, $x64Markers, true)) {
+        $x64Markers = ['x86_64', 'x64', 'win64', 'wow64', 'amd64', 'arm64', 'aarch64'];
+        foreach ($x64Markers as $marker) {
+            if (str_contains($userAgent, $marker)) {
                 return 'x64';
             }
-            if (in_array($token, $x32Markers, true)) {
+        }
+
+        $x32Markers = ['i386', 'i686', 'x86', 'win32'];
+        foreach ($x32Markers as $marker) {
+            if (str_contains($userAgent, $marker)) {
                 return 'x32';
             }
         }
 
-        return null;
+        if (str_contains($userAgent, 'android') || str_contains($userAgent, 'iphone')) {
+            if (preg_match('/android [2-4]\./', $userAgent)) {
+                return 'x32';
+            }
+        }
+
+        return 'Unknown';
     }
 }

@@ -8,11 +8,6 @@ use Yii;
 use yii\base\Model;
 use yii\base\Security;
 
-/**
- * LoginForm is the model behind the login form.
- *
- * @property-read User|null $user
- *
 class LoginForm extends Model
 {
     public string $username = '';

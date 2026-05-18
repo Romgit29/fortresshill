@@ -18,7 +18,11 @@
         "yiisoft/yii2": "~2.0.54",
         "yiisoft/yii2-bootstrap5": "~2.0.2",
         "yiisoft/yii2-symfonymailer": "~2.0.3",
-        "donatj/phpuseragentparser": "^1.11"
+        "donatj/phpuseragentparser": "^1.11",
+        "2amigos/yii2-chartjs-widget": "~2.0",
+        "onmotion/yii2-widget-apexcharts": "^1.0",
+        "kartik-v/yii2-date-range": "dev-master",
+        "yiisoft/yii2-bootstrap4": "^2.0"
     },
     "require-dev": {
         "codeception/c3": "^2.8",

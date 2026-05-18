@@ -1,205 +1,163 @@
 <?php
 
-/** @var yii\web\View $this */
-
+use dosamigos\chartjs\ChartJs;
+use onmotion\apexcharts\ApexchartsWidget;
+use yii\grid\GridView;
 use yii\helpers\Html;
+use yii\bootstrap4\ActiveForm;
+use kartik\daterange\DateRangePicker;
 
-$this->title = 'My Yii Application';
-$this->params['meta_description'] = 'A high-performance PHP framework best for developing web applications. Fast, secure, and professional.';
-$this->params['meta_keywords'] = 'yii, yii2, php, framework, web application, high-performance';
+$series = [
+    [
+        'data' => []
+    ],
+    [
+        'data' => []
+    ],
+    [
+        'data' => []
+    ],
+];
+
+foreach ($mostPopularBrowserGraphData as $queryCount) {
+    foreach ($queryCount['top_browsers_data'] as $key => $topBrowserData) {
+        $series[$key]['data'][] = [
+            'x' => $queryCount['date_formatted'],
+            'y' => $topBrowserData['percentage'],
+            'browser_name' => $topBrowserData['browser'],
+        ];
+    }
+}
 ?>
+
 <div class="site-index">
-    <!-- Hero banner with Yii gradient -->
-    <div class="hero-banner text-white rounded-4 p-5 mb-4 position-relative overflow-hidden">
-        <?= Html::img(Yii::getAlias('@web/images/yii3_full_white_for_dark.svg'), [
-            'alt' => '',
-            'class' => 'd-none d-lg-block position-absolute hero-logo',
-        ]) ?>
-        <div class="position-relative">
-            <h1 class="display-5 fw-bold mb-3">Build with Yii Framework</h1>
-            <p class="lead opacity-75 mb-4 hero-lead">
-                A high-performance PHP framework best for developing web applications.
-                Fast, secure, and professional.
-            </p>
-            <div class="d-flex gap-2 flex-wrap">
-                <?= Html::a(
-                    'Get Started',
-                    'https://www.yiiframework.com/doc/guide/2.0/en/start-installation',
-                    [
-                        'class' => 'btn btn-light btn-lg fw-semibold px-4',
-                        'rel' => 'noopener',
-                        'target' => '_blank',
+    <div class="filter-box" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 40px; border: 1px solid #e9ecef;">
+
+        <?php $form = ActiveForm::begin([
+            'action' => ['index'],
+            'method' => 'get',
+            'options' => ['class' => 'form-inline'],
+        ]); ?>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; color: black;">
+            <div class="form-group" style="min-width: 250px;">
+                <label class="control-label">Период дат</label>
+                <?= DateRangePicker::widget([
+                    'model' => $searchModel,
+                    'attribute' => 'date_range',
+                    'convertFormat' => true,
+                    'startAttribute' => 'date_from',
+                    'endAttribute' => 'date_to',
+                    'bsVersion' => '4',
+                    'pluginOptions' => [
+                        'showDropdowns' => true,
+                        'locale' => [
+                            'format' => 'Y-m-d',
+                            'separator' => ' - ',
+                        ],
+                        'opens' => 'right'
                     ],
-                ) ?>
-                <?= Html::a(
-                    'API Reference',
-                    'https://www.yiiframework.com/doc/api/2.0',
-                    [
-                        'class' => 'btn btn-outline-light btn-lg px-4',
-                        'rel' => 'noopener',
-                        'target' => '_blank',
-                    ],
-                ) ?>
+                    'options' => [
+                        'class' => 'form-control',
+                        'placeholder' => 'Выберите диапазон...',
+                        'value' => Yii::$app->request->get('LogSearch')['date_range'] ?? null
+                    ]
+                ]) ?>
+            </div>
+
+            <div class="form-group">
+                <?= $form->field($searchModel, 'os')->textInput(['class' => 'form-control', 'value' => Yii::$app->request->get('LogSearch')['os'] ?? null])->label('Операционная система') ?>
+            </div>
+
+            <div class="form-group">
+                <?= $form->field($searchModel, 'architecture')->textInput(['value' => Yii::$app->request->get('LogSearch')['os'] ?? null, 'class' => 'form-control'])->label('Архитектура') ?>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <?= Html::submitButton('Применить', ['class' => 'btn btn-primary']) ?>
+                <?= Html::a('Сбросить', ['index'], ['class' => 'btn btn-outline-secondary', 'style' => 'margin-left: 5px; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; color: #333; text-decoration: none;']) ?>
             </div>
         </div>
+
+        <?php ActiveForm::end(); ?>
     </div>
 
-    <!-- Extensions grid -->
-    <div class="row g-3">
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#128270;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-debug</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Debug toolbar and debugger for Yii2. Inspect logs, database queries,
-                        request data, and application performance in real time.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-debug',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
+    <h1 style='margin-top: 100px; text-align: center;'>Количество запросов</h1>
 
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#9881;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-gii</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Automatic code generator for models, controllers, CRUD, forms, and modules.
-                        Boost your productivity with scaffolding.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-gii',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
+    <?= ChartJs::widget([
+        'type' => 'bar',
+        'options' => [
+            'height' => 400,
+            'width' => 600
+        ],
+        'data' => [
+            'labels' => array_column($countGraphData, 'date_formatted'),
+            'datasets' => [
+                [
+                    'label' => "Число запросов",
+                    'backgroundColor' => "rgba(255,99,132,0.2)",
+                    'borderColor' => "rgba(255,99,132,1)",
+                    'pointBackgroundColor' => "rgba(255,99,132,1)",
+                    'data' => array_column($countGraphData, 'request_count')
+                ]
+            ]
+        ],
+        'clientOptions' => [
+            'scales' => [
+                'yAxes' => [
+                    [
+                        'ticks' => [
+                            'beginAtZero' => true
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ]); ?>
 
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#128203;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-queue</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Asynchronous job queue with support for DB, Redis, AMQP, Beanstalk,
-                        and SQS drivers. Run background tasks with ease.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-queue',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
+    <h1 style='margin-top: 100px; text-align: center;'>Самые популярные браузеры</h1>
 
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#9889;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-redis</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Redis integration providing cache, session, and ActiveRecord support.
-                        Leverage in-memory storage for blazing-fast data access.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-redis',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
+    <?= ApexchartsWidget::widget([
+        'type' => 'bar',
+        'height' => '400',
+        'width' => '100%',
+        'series' => $series,
+        'chartOptions' => [
+            'plotOptions' => [
+                'bar' => [
+                    'horizontal' => false,
+                    'columnWidth' => '70%',
+                ],
+            ],
+            'colors' => ['#33b2df', '#546E7A', '#d4526e'],
+            'yaxis' => [
+                'min' => 0,
+                'max' => 100,
+                'title' => [
+                    'text' => 'Доля запросов (%)'
+                ]
+            ],
+            'legend' => [
+                'show' => false
+            ],
+            'tooltip' => [
+                'custom' => new \yii\web\JsExpression("function({series, seriesIndex, dataPointIndex, w}) {
+                var data = w.globals.initialSeries[seriesIndex].data[dataPointIndex];
+                if (!data || !data.browser_name) return ''; 
+                
+                return '<div style=\"padding:10px; background:#fff; border:1px solid #ccc; color:#000; font-family: sans-serif;\">' +
+                    '<b>' + data.browser_name + '</b><br/>' +
+                    'Доля: ' + data.y + '%' +
+                    '</div>';
+            }")
+            ]
+        ]
+    ]); ?>
 
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#128269;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-elasticsearch</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Elasticsearch integration with ActiveRecord and query builder.
-                        Add powerful full-text search capabilities to your application.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://www.yiiframework.com/extension/yiisoft/yii2-elasticsearch',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
+    <h1 style='margin-top: 100px; text-align: center;'>Логи</h1>
 
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm rounded-3 extension-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="extension-icon" aria-hidden="true">&#9993;</span>
-                        <h3 class="h6 fw-bold mb-0 ms-2">yii2-symfonymailer</h3>
-                    </div>
-                    <p class="text-body-secondary small mb-0">
-                        Email sending integration powered by Symfony Mailer.
-                        Compose and deliver rich HTML emails with attachments and templates.
-                    </p>
-                </div>
-                <div class="card-footer bg-transparent border-0 pt-0">
-                    <?= Html::a(
-                        'Learn more &raquo;',
-                        'https://github.com/yiisoft/yii2-symfonymailer',
-                        [
-                            'class' => 'btn btn-sm btn-outline-secondary',
-                            'rel' => 'noopener',
-                            'target' => '_blank',
-                        ],
-                    ) ?>
-                </div>
-            </div>
-        </div>
-    </div>
+    <?= GridView::widget([
+        'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel
+    ]) ?>
 </div>
