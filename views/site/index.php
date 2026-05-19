@@ -55,6 +55,7 @@ foreach ($mostPopularBrowserGraphData as $queryCount) {
                             'format' => 'Y-m-d',
                             'separator' => ' - ',
                         ],
+                        'maxSpan' => ['years' => 1], 
                         'opens' => 'right'
                     ],
                     'options' => [

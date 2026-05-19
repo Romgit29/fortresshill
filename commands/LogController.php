@@ -50,6 +50,7 @@ class LogController extends Controller
                     'browser' => $uaInfo->browser(),
                     'os' => $uaInfo->platform(),
                     'architecture' => $this->getUserAgentArch($line),
+                    'agent' => $userAgent,
                     'createdAt' => time(),
                     'updatedAt' => time(),
                 ];

@@ -14,8 +14,10 @@ use Yii;
  * @property string|null $os
  * @property string|null $architecture
  * @property string|null $browser
+ * @property string|null $agent
  * @property int|null $createdAt
  * @property int|null $updatedAt
+ * @property string|null $log_date
  */
 class Log extends \yii\db\ActiveRecord
 {
@@ -35,9 +37,11 @@ class Log extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['ip', 'date', 'url', 'os', 'architecture', 'browser', 'createdAt', 'updatedAt'], 'default', 'value' => null],
+            [['ip', 'date', 'url', 'os', 'architecture', 'browser', 'agent', 'createdAt', 'updatedAt', 'log_date'], 'default', 'value' => null],
             [['date', 'createdAt', 'updatedAt'], 'integer'],
-            [['ip', 'url', 'os', 'architecture', 'browser'], 'string', 'max' => 255],
+            [['log_date'], 'safe'],
+            [['ip', 'os', 'architecture', 'browser', 'agent'], 'string', 'max' => 255],
+            [['url'], 'string', 'max' => 2048],
         ];
     }
 
@@ -54,8 +58,10 @@ class Log extends \yii\db\ActiveRecord
             'os' => 'Os',
             'architecture' => 'Architecture',
             'browser' => 'Browser',
+            'agent' => 'Agent',
             'createdAt' => 'Created At',
             'updatedAt' => 'Updated At',
+            'log_date' => 'Log Date',
         ];
     }
 

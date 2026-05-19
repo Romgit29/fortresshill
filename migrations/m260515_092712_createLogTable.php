@@ -20,6 +20,7 @@ class m260515_092712_createLogTable extends Migration
             'os' => $this->string(),
             'architecture' => $this->string(),
             'browser' => $this->string(),
+            'agent' => $this->string(1024),
             'createdAt' => $this->bigInteger(),
 			'updatedAt' => $this->bigInteger()
         ]);
