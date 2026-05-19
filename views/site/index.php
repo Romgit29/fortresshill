@@ -22,7 +22,7 @@ $series = [
 foreach ($mostPopularBrowserGraphData as $queryCount) {
     foreach ($queryCount['top_browsers_data'] as $key => $topBrowserData) {
         $series[$key]['data'][] = [
-            'x' => $queryCount['date_formatted'],
+            'x' => $queryCount['log_date'],
             'y' => $topBrowserData['percentage'],
             'browser_name' => $topBrowserData['browser'],
         ];
@@ -70,7 +70,7 @@ foreach ($mostPopularBrowserGraphData as $queryCount) {
             </div>
 
             <div class="form-group">
-                <?= $form->field($searchModel, 'architecture')->textInput(['value' => Yii::$app->request->get('LogSearch')['os'] ?? null, 'class' => 'form-control'])->label('Архитектура') ?>
+                <?= $form->field($searchModel, 'architecture')->textInput(['value' => Yii::$app->request->get('LogSearch')['architecture'] ?? null, 'class' => 'form-control'])->label('Архитектура') ?>
             </div>
 
             <div class="form-group" style="margin-bottom: 15px;">
@@ -91,7 +91,7 @@ foreach ($mostPopularBrowserGraphData as $queryCount) {
             'width' => 600
         ],
         'data' => [
-            'labels' => array_column($countGraphData, 'date_formatted'),
+            'labels' => array_column($countGraphData, 'log_date'),
             'datasets' => [
                 [
                     'label' => "Число запросов",

@@ -11,7 +11,7 @@ use yii\db\Query;
 
 class LogRepository
 {
-    protected function applyFilters($query, array $params = [])
+    public function applyFilters($query, array $params = [])
     {
         if (!empty($params['os'])) {
             $query->andWhere(['os' => $params['os']]);
@@ -22,12 +22,24 @@ class LogRepository
         }
 
         if (!empty($params['date_from']) && !empty($params['date_to'])) {
-            $dateStartInt = strtotime($params['date_from'] . ' 00:00:00');
-            $dateEndInt = strtotime($params['date_to'] . ' 23:59:59');
-            $query->andFilterWhere(['between', 'date', $dateStartInt, $dateEndInt]);
+            $query->andFilterWhere(['between', 'log_date', $params['date_from'], $params['date_to']]);
         }
 
         return $query;
+    }
+
+    public function getRequestCountQuery(array $params = []): ActiveQuery
+    {
+        $query = Log::find()
+            ->select([
+                'log_date',
+                'request_count' => 'COUNT(id)'
+            ])
+            ->asArray()
+            ->groupBy('log_date')
+            ->orderBy(['log_date' => SORT_DESC]);
+
+        return $this->applyFilters($query, $params);
     }
 
     public function getRequestCountGraphData(array $params = []): array
@@ -39,84 +51,67 @@ class LogRepository
         return array_reverse($data);
     }
 
-    public function getRequestCountQuery(array $params = []): ActiveQuery
-    {
-        $query = Log::find()
-            ->select([
-                'date_formatted' => "DATE(FROM_UNIXTIME(date))",
-                'request_count' => 'COUNT(id)'
-            ])
-            ->asArray()
-            ->groupBy('date_formatted')
-            ->orderBy(['date_formatted' => SORT_DESC]);
-
-        return $this->applyFilters($query, $params);
-    }
-
-    public function getMostPopularBrowserGraphData(array $params = [])
+    public function getMostPopularBrowserGraphData(array $params = []): array
     {
         $requestCounts = $this->getRequestCountGraphData($params);
+        if (empty($requestCounts)) {
+            return [];
+        }
 
-        foreach ($requestCounts as &$requestCount) {
-            $dateFormatted = $requestCount['date_formatted'];
-            $topBrowsersQuery = Log::find()
-                ->select([
-                    'browser',
-                    'request_count' => 'COUNT(id)'
-                ])
-                ->andWhere(['not', ['browser' => null]])
-                ->andWhere("DATE(FROM_UNIXTIME(date)) = '$dateFormatted'")
-                ->groupBy('browser')
-                ->orderBy(['request_count' => SORT_DESC])
-                ->limit(3)
-                ->asArray();
+        $dates = array_column($requestCounts, 'log_date');
 
-            $topBrowsersQuery = $this->applyFilters($topBrowsersQuery, $params);
-            
-            $requestCount['top_browsers_data'] = $topBrowsersQuery->all();
+        $subQuery = Log::find()
+            ->select([
+                'log_date',
+                'browser',
+                'browser_count' => 'COUNT(id)'
+            ])
+            ->andWhere(['not', ['browser' => null]])
+            ->groupBy(['log_date', 'browser']);
+
+        $subQuery = $this->applyFilters($subQuery, $params);
+
+        $rankedQuery = (new Query())
+            ->select([
+                'log_date',
+                'browser',
+                'browser_count',
+                'row_num' => new Expression('ROW_NUMBER() OVER (PARTITION BY log_date ORDER BY browser_count DESC)')
+            ])
+            ->from($subQuery);
+
+        $topBrowsers = (new Query())
+            ->select(['log_date', 'browser', 'browser_count'])
+            ->from(['ranked' => $rankedQuery])
+            ->where(['<=', 'row_num', 3])
+            ->andWhere(['log_date' => $dates])
+            ->all();
+
+        $browsersByDate = [];
+        foreach ($topBrowsers as $row) {
+            $browsersByDate[$row['log_date']][] = [
+                'browser' => $row['browser'],
+                'request_count' => (int) $row['browser_count'],
+            ];
         }
 
         foreach ($requestCounts as &$requestCount) {
-            foreach ($requestCount['top_browsers_data'] as &$browser) {
-                $browser['percentage'] = $requestCount['request_count'] > 0 ? round(($browser['request_count'] / $requestCount['request_count']) * 100, 2) : 0;
-            }
+            $date = $requestCount['log_date'];
+            $totalDailyRequests = (int) $requestCount['request_count'];
+
+            $dayBrowsers = array_map(function ($browser) use ($totalDailyRequests) {
+                if ($totalDailyRequests > 0) {
+                    $browser['percentage'] = round(($browser['request_count'] / $totalDailyRequests) * 100, 2);
+                } else {
+                    $browser['percentage'] = 0;
+                }
+
+                return $browser;
+            }, $browsersByDate[$date] ?? []);
+
+            $requestCount['top_browsers_data'] = $dayBrowsers;
         }
 
         return $requestCounts;
     }
-
-    public function getMostPopularSub(string $column, array $params = []): Query
-    {
-        $countSub = Log::find()
-            ->select([
-                'date_formatted' => new Expression('DATE(FROM_UNIXTIME(`date`))'),
-                $column,
-                'request_count' => new Expression("COUNT(`$column`)"),
-            ])
-            ->groupBy([
-                'date_formatted',
-                $column,
-            ]);
-
-        $countSub = $this->applyFilters($countSub, $params);
-
-        $rankedSub = (new Query())
-            ->select([
-                $column,
-                'date_formatted',
-                'row_num' => new Expression('ROW_NUMBER() OVER (PARTITION BY date_formatted ORDER BY `request_count` DESC)')
-            ])
-            ->from(['counts' => $countSub]);
-
-        $mostPopularSub = (new Query())
-            ->select([
-                "$column as most_popular_$column",
-                'date_formatted',
-            ])
-            ->from(['ranked' => $rankedSub])
-            ->where(['row_num' => 1]);
-
-        return $mostPopularSub;
-    }
 }
-
